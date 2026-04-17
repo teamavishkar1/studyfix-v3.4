@@ -1,0 +1,2831 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyFix Admin — Dashboard</title>
+<meta name="description" content="StudyFix Admin Panel for managing the peer mentoring platform at Chandigarh University.">
+<style>
+/* ============================================
+   CSS VARIABLES & THEME SYSTEM
+   ============================================ */
+:root {
+  --brand-1: #1a1a2e;
+  --brand-2: #16213e;
+  --brand-3: #0f3460;
+  --brand-accent: #e94560;
+  --sidebar-width: 260px;
+  --sidebar-collapsed: 68px;
+  --topbar-height: 64px;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-xs: 6px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.12);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.15);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.2);
+  --transition: .25s cubic-bezier(.4,0,.2,1);
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0a0a1a;
+  --bg-secondary: #111128;
+  --bg-card: #16163a;
+  --bg-card-hover: #1c1c48;
+  --bg-sidebar: #0d0d24;
+  --bg-topbar: rgba(13,13,36,.85);
+  --bg-input: #1e1e4a;
+  --bg-modal: #16163a;
+  --border: rgba(255,255,255,.06);
+  --border-hover: rgba(255,255,255,.12);
+  --text-primary: #f0f0f8;
+  --text-secondary: #9898b8;
+  --text-muted: #6868a0;
+  --text-inverse: #0a0a1a;
+  --accent: #e94560;
+  --accent-hover: #ff5a78;
+  --accent-soft: rgba(233,69,96,.12);
+  --success: #2ecc71;
+  --success-soft: rgba(46,204,113,.12);
+  --warning: #f39c12;
+  --warning-soft: rgba(243,156,18,.12);
+  --info: #3498db;
+  --info-soft: rgba(52,152,219,.12);
+  --danger: #e74c3c;
+  --danger-soft: rgba(231,76,60,.12);
+  --skeleton: linear-gradient(90deg, #1e1e4a 25%, #2a2a5a 50%, #1e1e4a 75%);
+  --scrollbar-track: #111128;
+  --scrollbar-thumb: #2a2a5a;
+}
+
+[data-theme="light"] {
+  --bg-primary: #f5f5fa;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8f8ff;
+  --bg-sidebar: #1a1a2e;
+  --bg-topbar: rgba(255,255,255,.9);
+  --bg-input: #f0f0f8;
+  --bg-modal: #ffffff;
+  --border: rgba(0,0,0,.08);
+  --border-hover: rgba(0,0,0,.15);
+  --text-primary: #1a1a2e;
+  --text-secondary: #555580;
+  --text-muted: #8888aa;
+  --text-inverse: #ffffff;
+  --accent: #e94560;
+  --accent-hover: #d63050;
+  --accent-soft: rgba(233,69,96,.08);
+  --success: #27ae60;
+  --success-soft: rgba(39,174,96,.08);
+  --warning: #e67e22;
+  --warning-soft: rgba(230,126,34,.08);
+  --info: #2980b9;
+  --info-soft: rgba(41,128,185,.08);
+  --danger: #c0392b;
+  --danger-soft: rgba(192,57,43,.08);
+  --skeleton: linear-gradient(90deg, #e8e8f0 25%, #f0f0f8 50%, #e8e8f0 75%);
+  --scrollbar-track: #e8e8f0;
+  --scrollbar-thumb: #c0c0d8;
+}
+
+/* ============================================
+   RESET & BASE
+   ============================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+
+a { color: var(--accent); text-decoration: none; }
+button { cursor: pointer; font-family: var(--font); border: none; outline: none; }
+input, select, textarea { font-family: var(--font); outline: none; }
+
+/* ============================================
+   LOGIN OVERLAY
+   ============================================ */
+.login-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: var(--brand-1);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 1; transition: opacity .4s ease;
+}
+.login-overlay.hidden { opacity: 0; pointer-events: none; }
+
+.login-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 48px 40px;
+  width: 100%; max-width: 420px;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  animation: loginSlide .5s ease;
+}
+@keyframes loginSlide {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.login-logo { font-size: 32px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+.login-logo span { color: var(--text-primary); }
+.login-subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 32px; }
+
+.login-field { position: relative; margin-bottom: 20px; text-align: left; }
+.login-field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600; }
+.login-field input {
+  width: 100%; padding: 12px 16px; background: var(--bg-input);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text-primary); font-size: 15px;
+  transition: border var(--transition);
+}
+.login-field input:focus { border-color: var(--accent); }
+.login-field .toggle-pw {
+  position: absolute; right: 12px; top: 36px;
+  background: none; color: var(--text-muted); font-size: 13px;
+}
+
+.login-btn {
+  width: 100%; padding: 14px;
+  background: var(--accent); color: #fff;
+  border-radius: var(--radius-sm); font-size: 15px; font-weight: 700;
+  transition: background var(--transition), transform .15s;
+  margin-top: 8px;
+}
+.login-btn:hover { background: var(--accent-hover); }
+.login-btn:active { transform: scale(.98); }
+
+.login-error {
+  color: var(--danger); font-size: 13px;
+  margin-top: 12px; min-height: 20px;
+}
+
+/* ============================================
+   LAYOUT
+   ============================================ */
+.app { display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--bg-sidebar);
+  border-right: 1px solid rgba(255,255,255,.05);
+  display: flex; flex-direction: column;
+  position: fixed; top: 0; left: 0; bottom: 0;
+  z-index: 100; transition: transform var(--transition);
+}
+
+.sidebar-header {
+  padding: 20px 24px;
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.sidebar-logo { font-size: 22px; font-weight: 800; color: #fff; }
+.sidebar-logo span { color: var(--accent); }
+.sidebar-badge {
+  font-size: 9px; background: var(--accent);
+  color: #fff; padding: 2px 8px; border-radius: 20px;
+  font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+}
+
+.sidebar-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+
+.nav-section {
+  font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3);
+  text-transform: uppercase; letter-spacing: 1.5px;
+  padding: 16px 12px 8px; margin-top: 8px;
+}
+.nav-section:first-child { margin-top: 0; padding-top: 0; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 16px; border-radius: var(--radius-sm);
+  color: rgba(255,255,255,.55); font-size: 14px; font-weight: 500;
+  transition: all var(--transition); cursor: pointer;
+  margin-bottom: 2px; position: relative;
+  background: none; width: 100%; text-align: left;
+}
+.nav-item:hover { color: rgba(255,255,255,.9); background: rgba(255,255,255,.06); }
+.nav-item.active {
+  color: #fff; background: rgba(233,69,96,.15);
+}
+.nav-item.active::before {
+  content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 24px; background: var(--accent); border-radius: 0 3px 3px 0;
+}
+.nav-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  font-size: 11px; color: rgba(255,255,255,.25);
+}
+
+/* MAIN */
+.main-area {
+  flex: 1; margin-left: var(--sidebar-width);
+  display: flex; flex-direction: column;
+  min-height: 100vh;
+  transition: margin var(--transition);
+}
+
+/* TOPBAR */
+.topbar {
+  height: var(--topbar-height);
+  background: var(--bg-topbar);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px;
+  position: sticky; top: 0; z-index: 50;
+}
+
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.hamburger {
+  display: none; background: none; color: var(--text-primary);
+  font-size: 24px; padding: 4px;
+}
+.topbar-title { font-size: 18px; font-weight: 700; }
+
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+
+.theme-toggle {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--bg-input); color: var(--text-secondary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; transition: all var(--transition); border: 1px solid var(--border);
+}
+.theme-toggle:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+
+.admin-info {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 14px;
+  background: var(--bg-input);
+  border-radius: 30px; border: 1px solid var(--border);
+}
+.admin-avatar {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, var(--accent), var(--brand-3));
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 12px; font-weight: 700;
+}
+.admin-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+
+.btn-logout {
+  padding: 8px 18px; background: var(--danger-soft);
+  color: var(--danger); border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600;
+  transition: all var(--transition); border: 1px solid transparent;
+}
+.btn-logout:hover { background: var(--danger); color: #fff; }
+
+/* CONTENT */
+.content { flex: 1; padding: 28px 32px; }
+
+.page { display: none; animation: pageFade .35s ease; }
+.page.active { display: block; }
+@keyframes pageFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 28px; flex-wrap: wrap; gap: 16px;
+}
+.page-header h1 { font-size: 26px; font-weight: 800; }
+.page-header p { color: var(--text-secondary); font-size: 14px; margin-top: 2px; }
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600;
+  transition: all var(--transition); border: 1px solid transparent;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(233,69,96,.3); }
+.btn-secondary { background: var(--bg-input); color: var(--text-primary); border-color: var(--border); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:hover { filter: brightness(1.1); }
+.btn-danger { background: var(--danger-soft); color: var(--danger); }
+.btn-danger:hover { background: var(--danger); color: #fff; }
+.btn-warning { background: var(--warning-soft); color: var(--warning); }
+.btn-warning:hover { background: var(--warning); color: #fff; }
+.btn-sm { padding: 6px 14px; font-size: 12px; }
+.btn-icon {
+  width: 34px; height: 34px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-xs); background: var(--bg-input);
+  color: var(--text-secondary); border: 1px solid var(--border);
+  font-size: 15px; transition: all var(--transition);
+}
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+/* ============================================
+   KPI CARDS
+   ============================================ */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px; margin-bottom: 32px;
+}
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  transition: all var(--transition);
+  position: relative; overflow: hidden;
+}
+.kpi-card:hover { transform: translateY(-2px); border-color: var(--border-hover); box-shadow: var(--shadow-md); }
+.kpi-card::after {
+  content: ''; position: absolute; top: 0; right: 0;
+  width: 80px; height: 80px;
+  border-radius: 0 0 0 80px;
+  opacity: .06;
+}
+.kpi-card[data-color="accent"]::after { background: var(--accent); }
+.kpi-card[data-color="success"]::after { background: var(--success); }
+.kpi-card[data-color="info"]::after { background: var(--info); }
+.kpi-card[data-color="warning"]::after { background: var(--warning); }
+
+.kpi-icon {
+  width: 44px; height: 44px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; margin-bottom: 16px;
+}
+.kpi-card[data-color="accent"] .kpi-icon { background: var(--accent-soft); color: var(--accent); }
+.kpi-card[data-color="success"] .kpi-icon { background: var(--success-soft); color: var(--success); }
+.kpi-card[data-color="info"] .kpi-icon { background: var(--info-soft); color: var(--info); }
+.kpi-card[data-color="warning"] .kpi-icon { background: var(--warning-soft); color: var(--warning); }
+
+.kpi-value { font-size: 32px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+.kpi-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+
+/* ============================================
+   CARDS & PANELS
+   ============================================ */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color var(--transition);
+}
+.card:hover { border-color: var(--border-hover); }
+.card-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+}
+.card-header h3 { font-size: 16px; font-weight: 700; }
+.card-body { padding: 24px; }
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 20px;
+}
+
+/* ============================================
+   TABLES
+   ============================================ */
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+}
+.table-toolbar {
+  padding: 16px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+}
+.table-toolbar-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.table-toolbar-right { display: flex; align-items: center; gap: 10px; }
+
+.search-input {
+  padding: 9px 16px 9px 38px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 13px; min-width: 220px;
+  transition: border var(--transition);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236868a0' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 12px center;
+}
+.search-input:focus { border-color: var(--accent); }
+
+.filter-select {
+  padding: 9px 14px; background: var(--bg-input);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text-primary); font-size: 13px;
+  transition: border var(--transition);
+}
+.filter-select:focus { border-color: var(--accent); }
+
+table {
+  width: 100%; border-collapse: collapse;
+}
+thead th {
+  padding: 12px 20px; text-align: left;
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .8px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+  white-space: nowrap;
+}
+tbody td {
+  padding: 14px 20px; font-size: 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+tbody tr { transition: background var(--transition); }
+tbody tr:hover { background: var(--bg-card-hover); }
+tbody tr:last-child td { border-bottom: none; }
+
+.table-actions { display: flex; gap: 6px; }
+
+/* STATUS BADGES */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 12px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .3px;
+}
+.badge-active, .badge-approved, .badge-completed { background: var(--success-soft); color: var(--success); }
+.badge-banned, .badge-rejected, .badge-cancelled { background: var(--danger-soft); color: var(--danger); }
+.badge-pending { background: var(--warning-soft); color: var(--warning); }
+.badge-scheduled, .badge-info { background: var(--info-soft); color: var(--info); }
+.badge-alert { background: var(--danger-soft); color: var(--danger); }
+.badge-warning-type { background: var(--warning-soft); color: var(--warning); }
+
+/* EMPTY STATE */
+.empty-state {
+  text-align: center; padding: 60px 20px;
+  color: var(--text-muted);
+}
+.empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: .4; }
+.empty-state h3 { color: var(--text-secondary); margin-bottom: 8px; }
+.empty-state p { font-size: 14px; }
+
+/* ============================================
+   MODAL SYSTEM
+   ============================================ */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(0,0,0,.6);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s ease;
+  padding: 20px;
+}
+.modal-overlay.visible { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--bg-modal);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 100%; max-width: 520px;
+  box-shadow: var(--shadow-lg);
+  transform: scale(.95); transition: transform .3s ease;
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-overlay.visible .modal { transform: scale(1); }
+
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-header h3 { font-size: 17px; font-weight: 700; }
+.modal-close {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--bg-input); color: var(--text-secondary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; transition: all var(--transition);
+}
+.modal-close:hover { background: var(--danger-soft); color: var(--danger); }
+
+.modal-body { padding: 24px; }
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; gap: 10px;
+}
+
+/* FORM FIELDS */
+.form-group { margin-bottom: 18px; }
+.form-group label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600; }
+.form-control {
+  width: 100%; padding: 10px 14px;
+  background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: var(--radius-xs); color: var(--text-primary);
+  font-size: 14px; transition: border var(--transition);
+}
+.form-control:focus { border-color: var(--accent); }
+textarea.form-control { min-height: 80px; resize: vertical; }
+
+/* ============================================
+   TOAST SYSTEM
+   ============================================ */
+.toast-container {
+  position: fixed; top: 80px; right: 24px; z-index: 9999;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.toast {
+  padding: 14px 20px; border-radius: var(--radius-sm);
+  background: var(--bg-card); border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  display: flex; align-items: center; gap: 12px;
+  min-width: 300px; max-width: 420px;
+  animation: toastIn .35s ease;
+  font-size: 14px;
+}
+.toast.removing { animation: toastOut .3s ease forwards; }
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes toastOut {
+  to { opacity: 0; transform: translateX(40px); }
+}
+.toast-icon { font-size: 20px; flex-shrink: 0; }
+.toast-success .toast-icon { color: var(--success); }
+.toast-error .toast-icon { color: var(--danger); }
+.toast-info .toast-icon { color: var(--info); }
+.toast-warning .toast-icon { color: var(--warning); }
+.toast-msg { flex: 1; }
+.toast-close { background: none; color: var(--text-muted); font-size: 18px; padding: 0 2px; }
+
+/* ============================================
+   ACTIVITY FEED
+   ============================================ */
+.activity-feed { list-style: none; }
+.activity-item {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent); margin-top: 7px; flex-shrink: 0;
+}
+.activity-text { font-size: 14px; color: var(--text-primary); }
+.activity-time { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+/* ============================================
+   CHART CONTAINERS
+   ============================================ */
+.chart-container {
+  position: relative;
+  padding: 20px;
+}
+.chart-container canvas { width: 100% !important; }
+
+.bar-chart-wrapper { position: relative; height: 260px; }
+.bar-chart {
+  display: flex; align-items: flex-end; justify-content: space-around;
+  height: 220px; padding: 0 10px;
+  border-bottom: 2px solid var(--border);
+  border-left: 2px solid var(--border);
+  position: relative;
+}
+.bar-group { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; }
+.bar {
+  width: 36px; border-radius: 6px 6px 0 0;
+  background: linear-gradient(180deg, var(--accent), var(--brand-3));
+  transition: height .6s cubic-bezier(.4,0,.2,1);
+  position: relative;
+}
+.bar:hover { filter: brightness(1.2); }
+.bar-value {
+  position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
+  font-size: 11px; font-weight: 700; color: var(--text-secondary);
+}
+.bar-label {
+  font-size: 11px; color: var(--text-muted);
+  text-align: center; white-space: nowrap;
+}
+.y-axis {
+  position: absolute; left: -8px; top: 0; bottom: 0;
+  display: flex; flex-direction: column-reverse; justify-content: space-between;
+  pointer-events: none;
+}
+.y-axis span {
+  font-size: 10px; color: var(--text-muted);
+  transform: translateX(-100%); padding-right: 8px;
+}
+
+/* PIE CHART */
+.pie-wrapper { display: flex; align-items: center; gap: 30px; flex-wrap: wrap; justify-content: center; }
+.pie-svg { width: 180px; height: 180px; }
+.pie-legend { display: flex; flex-direction: column; gap: 8px; }
+.pie-legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.pie-legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+/* ============================================
+   SETTINGS
+   ============================================ */
+.settings-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px; margin-bottom: 20px;
+}
+.settings-section h3 { font-size: 17px; font-weight: 700; margin-bottom: 20px; }
+
+.toggle-switch {
+  display: flex; align-items: center; gap: 14px;
+  cursor: pointer; font-size: 14px;
+}
+.toggle-track {
+  width: 44px; height: 24px;
+  background: var(--bg-input); border-radius: 12px;
+  position: relative; transition: background var(--transition);
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+}
+.toggle-track::after {
+  content: ''; position: absolute;
+  width: 18px; height: 18px;
+  background: var(--text-secondary);
+  border-radius: 50%;
+  top: 1px; left: 2px;
+  transition: all var(--transition);
+}
+.toggle-switch.active .toggle-track { background: var(--accent-soft); border-color: var(--accent); }
+.toggle-switch.active .toggle-track::after { left: 20px; background: var(--accent); }
+
+/* SKELETON */
+.skeleton {
+  background: var(--skeleton);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-xs);
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skeleton-line { height: 14px; margin-bottom: 10px; border-radius: 4px; }
+.skeleton-line:last-child { width: 60%; }
+
+/* ============================================
+   ANNOUNCEMENTS
+   ============================================ */
+.announcement-item {
+  display: flex; align-items: flex-start; gap: 16px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition);
+}
+.announcement-item:last-child { border-bottom: none; }
+.announcement-item:hover { background: var(--bg-card-hover); }
+.announcement-type-icon {
+  width: 36px; height: 36px; border-radius: var(--radius-xs);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.announcement-type-icon.info { background: var(--info-soft); color: var(--info); }
+.announcement-type-icon.warning { background: var(--warning-soft); color: var(--warning); }
+.announcement-type-icon.alert { background: var(--danger-soft); color: var(--danger); }
+.announcement-content { flex: 1; }
+.announcement-content h4 { font-size: 15px; margin-bottom: 4px; }
+.announcement-content p { font-size: 13px; color: var(--text-secondary); }
+.announcement-meta { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+
+/* ============================================
+   MOBILE OVERLAY
+   ============================================ */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.5); z-index: 99;
+}
+.sidebar-overlay.visible { display: block; }
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 1024px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .grid-2 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main-area { margin-left: 0; }
+  .hamburger { display: flex; }
+  .topbar { padding: 0 16px; }
+  .content { padding: 20px 16px; }
+  .kpi-grid { grid-template-columns: 1fr; }
+  .admin-name { display: none; }
+  .page-header h1 { font-size: 22px; }
+  .search-input { min-width: 160px; }
+  .table-toolbar { flex-direction: column; align-items: stretch; }
+  .table-toolbar-left, .table-toolbar-right { justify-content: stretch; }
+  .pie-wrapper { flex-direction: column; }
+}
+
+/* ============================================
+   USER VIEW MODAL DETAILS
+   ============================================ */
+.user-detail-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.user-detail-item label {
+  font-size: 11px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .5px;
+  display: block; margin-bottom: 2px;
+}
+.user-detail-item span {
+  font-size: 15px; font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* CONFIRM MODAL */
+.confirm-body { text-align: center; padding: 20px 0; }
+.confirm-body .confirm-icon { font-size: 48px; margin-bottom: 16px; }
+.confirm-body h3 { margin-bottom: 8px; font-size: 18px; }
+.confirm-body p { color: var(--text-secondary); font-size: 14px; }
+
+/* ============================================
+   RESOURCES / UPLOAD SYSTEM
+   ============================================ */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 40px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  background: var(--bg-input);
+  position: relative;
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.upload-zone.drag-over::after {
+  content: 'Drop file here';
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(233,69,96,.08);
+  border-radius: var(--radius);
+  font-size: 16px; font-weight: 700; color: var(--accent);
+  pointer-events: none;
+}
+.upload-zone-icon { font-size: 40px; margin-bottom: 12px; opacity: .5; }
+.upload-zone h3 { font-size: 15px; margin-bottom: 4px; color: var(--text-primary); }
+.upload-zone p { font-size: 13px; color: var(--text-muted); }
+.upload-zone input[type="file"] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer;
+}
+.upload-file-info {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; margin-top: 12px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.upload-file-icon { font-size: 28px; flex-shrink: 0; }
+.upload-file-details { flex: 1; text-align: left; }
+.upload-file-details .fname { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.upload-file-details .fsize { font-size: 12px; color: var(--text-muted); }
+.upload-file-remove {
+  background: var(--danger-soft); color: var(--danger);
+  border: none; width: 28px; height: 28px; border-radius: 50%;
+  font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
+}
+.upload-file-remove:hover { background: var(--danger); color: #fff; }
+
+.resource-type-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 12px; border-radius: 20px;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: .3px;
+}
+.rtype-notes { background: var(--info-soft); color: var(--info); }
+.rtype-pyq { background: var(--warning-soft); color: var(--warning); }
+.rtype-assignment { background: var(--success-soft); color: var(--success); }
+.rtype-other { background: rgba(155,89,182,.12); color: #9b59b6; }
+
+.file-type-icon { font-size: 22px; }
+
+.preview-iframe {
+  width: 100%; height: 400px; border: none;
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+.preview-image {
+  max-width: 100%; max-height: 400px;
+  border-radius: var(--radius-sm);
+  display: block; margin: 0 auto;
+}
+.resource-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px; margin-bottom: 24px;
+}
+.resource-stat-card {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px; text-align: center;
+}
+.resource-stat-card .stat-value { font-size: 24px; font-weight: 800; }
+.resource-stat-card .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo">Study<span>Fix</span></div>
+    <div class="login-subtitle">Admin Panel · Chandigarh University</div>
+    <div class="login-field">
+      <label for="loginPassword">Admin Password</label>
+      <input type="password" id="loginPassword" placeholder="Enter admin password" autocomplete="current-password">
+      <button class="toggle-pw" id="togglePw" type="button">Show</button>
+    </div>
+    <button class="login-btn" id="loginBtn" type="button">Sign In</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- MODAL OVERLAY -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- APP -->
+<div class="app" id="app" style="display:none;">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">Study<span>Fix</span></div>
+      <span class="sidebar-badge">Admin</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Overview</div>
+      <button class="nav-item active" data-page="dashboard">
+        <span class="nav-icon">📊</span> Dashboard
+      </button>
+
+      <div class="nav-section">Management</div>
+      <button class="nav-item" data-page="users">
+        <span class="nav-icon">👥</span> Users
+      </button>
+      <button class="nav-item" data-page="mentors">
+        <span class="nav-icon">🎓</span> Mentors
+      </button>
+      <button class="nav-item" data-page="sessions">
+        <span class="nav-icon">📅</span> Sessions
+      </button>
+      <button class="nav-item" data-page="notes">
+        <span class="nav-icon">📝</span> Notes
+      </button>
+      <button class="nav-item" data-page="resources">
+        <span class="nav-icon">📦</span> Resources
+      </button>
+
+      <div class="nav-section">Communication</div>
+      <button class="nav-item" data-page="announcements">
+        <span class="nav-icon">📢</span> Announcements
+      </button>
+
+      <div class="nav-section">Insights</div>
+      <button class="nav-item" data-page="reports">
+        <span class="nav-icon">📈</span> Reports
+      </button>
+
+      <div class="nav-section">System</div>
+      <button class="nav-item" data-page="settings">
+        <span class="nav-icon">⚙️</span> Settings
+      </button>
+    </nav>
+    <div class="sidebar-footer">StudyFix Admin v3.3 &copy; 2026</div>
+  </aside>
+
+  <!-- MAIN AREA -->
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" id="hamburger" type="button">☰</button>
+        <div class="topbar-title" id="topbarTitle">Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <button class="theme-toggle" id="themeToggle" title="Toggle Theme" type="button">🌙</button>
+        <div class="admin-info">
+          <div class="admin-avatar">A</div>
+          <span class="admin-name">Admin</span>
+        </div>
+        <button class="btn-logout" id="logoutBtn" type="button">Logout</button>
+      </div>
+    </header>
+
+    <main class="content" id="contentArea">
+
+      <!-- ===== DASHBOARD ===== -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header">
+          <div>
+            <h1>Dashboard</h1>
+            <p>Overview of your StudyFix platform</p>
+          </div>
+          <button class="btn btn-secondary" id="generateDummyBtn" type="button">🔄 Generate Dummy Data</button>
+        </div>
+        <div class="kpi-grid" id="kpiGrid"></div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><h3>Recent Activity</h3></div>
+            <div class="card-body" id="activityFeed">
+              <div class="empty-state">
+                <div class="empty-state-icon">📋</div>
+                <h3>No activity yet</h3>
+                <p>Admin actions will appear here</p>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Quick Stats</h3></div>
+            <div class="card-body" id="quickStats"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== USERS ===== -->
+      <div class="page" id="page-users">
+        <div class="page-header">
+          <div>
+            <h1>User Management</h1>
+            <p>Manage all registered users</p>
+          </div>
+          <button class="btn btn-secondary" id="exportUsersBtn" type="button">📥 Export CSV</button>
+        </div>
+        <div class="table-wrapper">
+          <div class="table-toolbar">
+            <div class="table-toolbar-left">
+              <input type="text" class="search-input" id="userSearch" placeholder="Search users...">
+              <select class="filter-select" id="userRoleFilter">
+                <option value="">All Roles</option>
+                <option value="student">Student</option>
+                <option value="mentor">Mentor</option>
+              </select>
+              <select class="filter-select" id="userStatusFilter">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="banned">Banned</option>
+              </select>
+            </div>
+          </div>
+          <div id="usersTableContainer"></div>
+        </div>
+      </div>
+
+      <!-- ===== MENTORS ===== -->
+      <div class="page" id="page-mentors">
+        <div class="page-header">
+          <div>
+            <h1>Mentor Management</h1>
+            <p>Manage mentor applications and profiles</p>
+          </div>
+          <button class="btn btn-secondary" id="exportMentorsBtn" type="button">📥 Export CSV</button>
+        </div>
+        <div class="table-wrapper">
+          <div class="table-toolbar">
+            <div class="table-toolbar-left">
+              <input type="text" class="search-input" id="mentorSearch" placeholder="Search mentors...">
+              <select class="filter-select" id="mentorStatusFilter">
+                <option value="">All Status</option>
+                <option value="approved">Approved</option>
+                <option value="pending">Pending</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+          </div>
+          <div id="mentorsTableContainer"></div>
+        </div>
+      </div>
+
+      <!-- ===== SESSIONS ===== -->
+      <div class="page" id="page-sessions">
+        <div class="page-header">
+          <div>
+            <h1>Session Management</h1>
+            <p>Track and manage mentoring sessions</p>
+          </div>
+          <button class="btn btn-secondary" id="exportSessionsBtn" type="button">📥 Export CSV</button>
+        </div>
+        <div class="table-wrapper">
+          <div class="table-toolbar">
+            <div class="table-toolbar-left">
+              <input type="text" class="search-input" id="sessionSearch" placeholder="Search sessions...">
+              <select class="filter-select" id="sessionStatusFilter">
+                <option value="">All Status</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+          <div id="sessionsTableContainer"></div>
+        </div>
+      </div>
+
+      <!-- ===== NOTES ===== -->
+      <div class="page" id="page-notes">
+        <div class="page-header">
+          <div>
+            <h1>Notes Management</h1>
+            <p>Manage study notes and materials</p>
+          </div>
+          <button class="btn btn-secondary" id="exportNotesBtn" type="button">📥 Export CSV</button>
+        </div>
+        <div class="table-wrapper">
+          <div class="table-toolbar">
+            <div class="table-toolbar-left">
+              <input type="text" class="search-input" id="noteSearch" placeholder="Search notes...">
+              <select class="filter-select" id="noteStatusFilter">
+                <option value="">All Status</option>
+                <option value="approved">Approved</option>
+                <option value="pending">Pending</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+          </div>
+          <div id="notesTableContainer"></div>
+        </div>
+      </div>
+
+      <!-- ===== RESOURCES ===== -->
+      <div class="page" id="page-resources">
+        <div class="page-header">
+          <div>
+            <h1>Resources & Uploads</h1>
+            <p>Upload and manage notes, PYQs, assignments & study materials</p>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-primary" id="uploadResourceBtn" type="button">📤 Upload Resource</button>
+            <button class="btn btn-secondary" id="exportResourcesBtn" type="button">📥 Export CSV</button>
+          </div>
+        </div>
+        <div class="resource-stats-grid" id="resourceStatsGrid"></div>
+        <div class="table-wrapper">
+          <div class="table-toolbar">
+            <div class="table-toolbar-left">
+              <input type="text" class="search-input" id="resourceSearch" placeholder="Search resources...">
+              <select class="filter-select" id="resourceTypeFilter">
+                <option value="">All Types</option>
+                <option value="Notes">Notes</option>
+                <option value="PYQ">PYQ</option>
+                <option value="Assignment">Assignment</option>
+                <option value="Other">Other</option>
+              </select>
+              <select class="filter-select" id="resourceSubjectFilter">
+                <option value="">All Subjects</option>
+              </select>
+              <select class="filter-select" id="resourceStatusFilter">
+                <option value="">All Status</option>
+                <option value="approved">Approved</option>
+                <option value="pending">Pending</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+          </div>
+          <div id="resourcesTableContainer"></div>
+        </div>
+      </div>
+
+      <!-- ===== ANNOUNCEMENTS ===== -->
+      <div class="page" id="page-announcements">
+        <div class="page-header">
+          <div>
+            <h1>Announcements</h1>
+            <p>Create and manage platform announcements</p>
+          </div>
+          <button class="btn btn-primary" id="newAnnouncementBtn" type="button">+ New Announcement</button>
+        </div>
+        <div class="card">
+          <div class="card-body" id="announcementsList"></div>
+        </div>
+      </div>
+
+      <!-- ===== REPORTS ===== -->
+      <div class="page" id="page-reports">
+        <div class="page-header">
+          <div>
+            <h1>Reports & Analytics</h1>
+            <p>Platform insights and performance data</p>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><h3>Sessions Per Week</h3></div>
+            <div class="card-body chart-container" id="barChartContainer"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Subject Popularity</h3></div>
+            <div class="card-body chart-container" id="pieChartContainer"></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:20px;">
+          <div class="card-header"><h3>Top Mentors</h3></div>
+          <div id="topMentorsTableContainer"></div>
+        </div>
+      </div>
+
+      <!-- ===== SETTINGS ===== -->
+      <div class="page" id="page-settings">
+        <div class="page-header">
+          <div>
+            <h1>Settings</h1>
+            <p>Configure admin panel and platform</p>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>🔐 Change Admin Password</h3>
+          <div class="form-group">
+            <label for="currentPw">Current Password</label>
+            <input type="password" class="form-control" id="currentPw" placeholder="Enter current password">
+          </div>
+          <div class="form-group">
+            <label for="newPw">New Password</label>
+            <input type="password" class="form-control" id="newPw" placeholder="Enter new password">
+          </div>
+          <div class="form-group">
+            <label for="confirmPw">Confirm New Password</label>
+            <input type="password" class="form-control" id="confirmPw" placeholder="Confirm new password">
+          </div>
+          <button class="btn btn-primary" id="changePwBtn" type="button">Update Password</button>
+        </div>
+
+        <div class="settings-section">
+          <h3>🌐 Site Settings</h3>
+          <div class="form-group">
+            <label for="siteTitle">Site Title</label>
+            <input type="text" class="form-control" id="siteTitle" placeholder="StudyFix">
+          </div>
+          <div class="form-group">
+            <label for="siteTagline">Tagline</label>
+            <input type="text" class="form-control" id="siteTagline" placeholder="Peer Mentoring Platform">
+          </div>
+          <button class="btn btn-primary" id="saveSiteBtn" type="button">Save Settings</button>
+        </div>
+
+        <div class="settings-section">
+          <h3>🛠️ Maintenance Mode</h3>
+          <div class="toggle-switch" id="maintenanceToggle">
+            <div class="toggle-track"></div>
+            <span>Enable Maintenance Mode</span>
+          </div>
+          <p style="color:var(--text-muted);font-size:13px;margin-top:10px;">When enabled, users will see a maintenance page instead of the app.</p>
+        </div>
+
+        <div class="settings-section">
+          <h3>💾 Data Management</h3>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button class="btn btn-secondary" id="generateDummyBtn2" type="button">🔄 Generate Dummy Data</button>
+            <button class="btn btn-danger" id="clearAllDataBtn" type="button">🗑️ Clear All Data</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+/* ============================================
+   DATABASE MODULE
+   ============================================ */
+const DB = (() => {
+  const KEYS = ['users','mentors','sessions','notes','announcements','adminSettings','activityLogs','resources'];
+
+  function get(key) {
+    try { return JSON.parse(localStorage.getItem(key)) || []; }
+    catch { return []; }
+  }
+
+  function set(key, data) {
+    localStorage.setItem(key, JSON.stringify(data));
+  }
+
+  function getObj(key) {
+    try { return JSON.parse(localStorage.getItem(key)) || {}; }
+    catch { return {}; }
+  }
+
+  function setObj(key, data) {
+    localStorage.setItem(key, JSON.stringify(data));
+  }
+
+  function genId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  function addRecord(key, record) {
+    const data = get(key);
+    record.id = genId();
+    record.timestamp = new Date().toISOString();
+    data.push(record);
+    set(key, data);
+    return record;
+  }
+
+  function updateRecord(key, id, updates) {
+    const data = get(key);
+    const idx = data.findIndex(r => r.id === id);
+    if (idx !== -1) {
+      Object.assign(data[idx], updates);
+      set(key, data);
+      return data[idx];
+    }
+    return null;
+  }
+
+  function deleteRecord(key, id) {
+    const data = get(key).filter(r => r.id !== id);
+    set(key, data);
+  }
+
+  function findRecord(key, id) {
+    return get(key).find(r => r.id === id) || null;
+  }
+
+  function init() {
+    KEYS.forEach(k => {
+      if (k === 'adminSettings') {
+        if (!localStorage.getItem(k)) setObj(k, { siteTitle: 'StudyFix', siteTagline: 'Peer Mentoring Platform', maintenanceMode: false });
+      } else {
+        if (!localStorage.getItem(k)) set(k, []);
+      }
+    });
+  }
+
+  return { get, set, getObj, setObj, genId, addRecord, updateRecord, deleteRecord, findRecord, init, KEYS };
+})();
+
+/* ============================================
+   ACTIVITY LOGGER
+   ============================================ */
+const Logger = (() => {
+  function log(action, target) {
+    DB.addRecord('activityLogs', { action, target });
+  }
+  function getRecent(n = 5) {
+    return DB.get('activityLogs').sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, n);
+  }
+  return { log, getRecent };
+})();
+
+/* ============================================
+   TOAST SYSTEM
+   ============================================ */
+const Toast = (() => {
+  const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+
+  function show(message, type = 'info', duration = 3500) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+      <span class="toast-icon">${icons[type]}</span>
+      <span class="toast-msg">${message}</span>
+      <button class="toast-close" type="button">&times;</button>
+    `;
+    container.appendChild(toast);
+    toast.querySelector('.toast-close').addEventListener('click', () => remove(toast));
+    setTimeout(() => remove(toast), duration);
+  }
+
+  function remove(toast) {
+    if (!toast.parentNode) return;
+    toast.classList.add('removing');
+    setTimeout(() => toast.remove(), 300);
+  }
+
+  return { show };
+})();
+
+/* ============================================
+   MODAL SYSTEM
+   ============================================ */
+const Modal = (() => {
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+
+  function open(title, bodyHtml, footerHtml = '') {
+    content.innerHTML = `
+      <div class="modal-header">
+        <h3>${title}</h3>
+        <button class="modal-close" type="button">&times;</button>
+      </div>
+      <div class="modal-body">${bodyHtml}</div>
+      ${footerHtml ? `<div class="modal-footer">${footerHtml}</div>` : ''}
+    `;
+    overlay.classList.add('visible');
+    content.querySelector('.modal-close').addEventListener('click', close);
+  }
+
+  function close() {
+    overlay.classList.remove('visible');
+  }
+
+  function confirm(title, message, onConfirm, icon = '⚠️') {
+    open(
+      title,
+      `<div class="confirm-body">
+        <div class="confirm-icon">${icon}</div>
+        <h3>${title}</h3>
+        <p>${message}</p>
+      </div>`,
+      `<button class="btn btn-secondary modal-cancel-btn" type="button">Cancel</button>
+       <button class="btn btn-danger modal-confirm-btn" type="button">Confirm</button>`
+    );
+    content.querySelector('.modal-cancel-btn').addEventListener('click', close);
+    content.querySelector('.modal-confirm-btn').addEventListener('click', () => {
+      close();
+      onConfirm();
+    });
+  }
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) close();
+  });
+
+  return { open, close, confirm };
+})();
+
+/* ============================================
+   TABLE RENDERER
+   ============================================ */
+const TableRenderer = (() => {
+  function render(containerId, columns, data, actions) {
+    const container = document.getElementById(containerId);
+    if (!data.length) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">📭</div>
+          <h3>No records found</h3>
+          <p>Try adjusting your search or filters</p>
+        </div>`;
+      return;
+    }
+    let html = '<table><thead><tr>';
+    columns.forEach(c => { html += `<th>${c.label}</th>`; });
+    if (actions) html += '<th>Actions</th>';
+    html += '</tr></thead><tbody>';
+    data.forEach(row => {
+      html += '<tr>';
+      columns.forEach(c => {
+        const val = c.render ? c.render(row) : (row[c.key] || '—');
+        html += `<td>${val}</td>`;
+      });
+      if (actions) {
+        html += `<td><div class="table-actions">${actions(row)}</div></td>`;
+      }
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+
+  function skeleton(containerId, cols = 5, rows = 5) {
+    const container = document.getElementById(containerId);
+    let html = '<table><thead><tr>';
+    for (let i = 0; i < cols; i++) html += '<th><div class="skeleton skeleton-line" style="width:80px;height:12px;"></div></th>';
+    html += '</tr></thead><tbody>';
+    for (let r = 0; r < rows; r++) {
+      html += '<tr>';
+      for (let c = 0; c < cols; c++) {
+        html += `<td><div class="skeleton skeleton-line" style="width:${60 + Math.random()*60}px;height:14px;margin:0;"></div></td>`;
+      }
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+
+  return { render, skeleton };
+})();
+
+/* ============================================
+   CSV EXPORT
+   ============================================ */
+const CSVExport = (() => {
+  function exportData(filename, columns, data) {
+    const header = columns.map(c => c.label).join(',');
+    const rows = data.map(row => {
+      return columns.map(c => {
+        let val = row[c.key] || '';
+        val = String(val).replace(/"/g, '""');
+        return `"${val}"`;
+      }).join(',');
+    });
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    Toast.show(`Exported ${data.length} records to ${filename}`, 'success');
+  }
+  return { exportData };
+})();
+
+/* ============================================
+   DEBOUNCE UTIL
+   ============================================ */
+function debounce(fn, delay = 300) {
+  let timer;
+  return function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+/* ============================================
+   DATE FORMATTING
+   ============================================ */
+function formatDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+function formatDateTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+function timeAgo(iso) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+/* ============================================
+   DUMMY DATA GENERATOR
+   ============================================ */
+const DummyData = (() => {
+  const firstNames = ['Aarav','Vivaan','Aditya','Vihaan','Arjun','Sai','Reyansh','Ayaan','Krishna','Ishaan','Ananya','Diya','Priya','Sneha','Kiara','Meera','Riya','Aisha','Pooja','Neha'];
+  const lastNames = ['Sharma','Verma','Gupta','Patel','Kumar','Singh','Joshi','Mehta','Reddy','Nair','Kapoor','Malhotra','Bhatia','Chopra','Khanna'];
+  const subjects = ['Data Structures','Operating Systems','DBMS','Computer Networks','Machine Learning','Web Development','Algorithms','Discrete Math','Software Engineering','Cloud Computing'];
+  const notesTitles = ['Complete OS Notes','DSA Cheat Sheet','DBMS Normalization','CN Protocols Summary','ML Algorithms Guide','React.js Handbook','Graph Algorithms','Probability Notes','UML Diagrams Guide','AWS Basics'];
+
+  function randomEl(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function randomRating() { return (3 + Math.random() * 2).toFixed(1); }
+  function randomDate(daysBack = 90) {
+    const d = new Date();
+    d.setDate(d.getDate() - Math.floor(Math.random() * daysBack));
+    return d.toISOString();
+  }
+
+  function generate() {
+    const users = [];
+    const mentors = [];
+    const sessions = [];
+    const notes = [];
+
+    for (let i = 0; i < 25; i++) {
+      const fn = randomEl(firstNames);
+      const ln = randomEl(lastNames);
+      const isMentor = i < 8;
+      users.push({
+        id: DB.genId(),
+        name: `${fn} ${ln}`,
+        email: `${fn.toLowerCase()}.${ln.toLowerCase()}@cumail.in`,
+        role: isMentor ? 'mentor' : 'student',
+        joinDate: randomDate(180),
+        status: Math.random() > 0.1 ? 'active' : 'banned',
+        timestamp: randomDate(180)
+      });
+    }
+
+    for (let i = 0; i < 8; i++) {
+      const user = users[i];
+      mentors.push({
+        id: DB.genId(),
+        userId: user.id,
+        name: user.name,
+        email: user.email,
+        subject: randomEl(subjects),
+        rating: randomRating(),
+        sessionsCompleted: Math.floor(Math.random() * 40),
+        status: i < 6 ? 'approved' : 'pending',
+        bio: `Experienced in ${randomEl(subjects)} with a passion for teaching.`,
+        timestamp: randomDate(120)
+      });
+    }
+
+    const statuses = ['scheduled','completed','completed','completed','cancelled'];
+    for (let i = 0; i < 30; i++) {
+      const mentor = mentors[Math.floor(Math.random() * mentors.length)];
+      const student = users[8 + Math.floor(Math.random() * 17)];
+      sessions.push({
+        id: DB.genId(),
+        studentName: student.name,
+        mentorName: mentor.name,
+        subject: mentor.subject,
+        date: randomDate(60),
+        status: randomEl(statuses),
+        timestamp: randomDate(60)
+      });
+    }
+
+    const noteStatuses = ['approved','approved','approved','pending','rejected'];
+    for (let i = 0; i < 15; i++) {
+      const uploader = users[Math.floor(Math.random() * users.length)];
+      notes.push({
+        id: DB.genId(),
+        title: i < notesTitles.length ? notesTitles[i] : `${randomEl(subjects)} Notes`,
+        uploader: uploader.name,
+        subject: randomEl(subjects),
+        uploadDate: randomDate(90),
+        downloads: Math.floor(Math.random() * 500),
+        status: randomEl(noteStatuses),
+        timestamp: randomDate(90)
+      });
+    }
+
+    DB.set('users', users);
+    DB.set('mentors', mentors);
+    DB.set('sessions', sessions);
+    DB.set('notes', notes);
+    DB.set('announcements', [
+      {
+        id: DB.genId(),
+        title: 'Welcome to StudyFix v3.3!',
+        message: 'We have launched new features including improved session scheduling and note sharing.',
+        type: 'info',
+        timestamp: new Date().toISOString()
+      },
+      {
+        id: DB.genId(),
+        title: 'Scheduled Maintenance',
+        message: 'The platform will undergo maintenance on Sunday 2:00 AM - 4:00 AM IST.',
+        type: 'warning',
+        timestamp: randomDate(5)
+      }
+    ]);
+    DB.set('activityLogs', [
+      { id: DB.genId(), action: 'Generated dummy data', target: 'System', timestamp: new Date().toISOString() },
+      { id: DB.genId(), action: 'Admin logged in', target: 'Auth', timestamp: new Date().toISOString() }
+    ]);
+
+    // Generate dummy resources
+    const resourceTypes = ['Notes','PYQ','Assignment','Other'];
+    const resourceStatuses = ['approved','approved','approved','pending','rejected'];
+    const resourceTitles = [
+      'DSA Complete Handbook','OS Mid-Sem PYQ 2025','DBMS Assignment 3','CN Lab Manual',
+      'ML Algorithm Cheat Sheet','Web Dev Project Report','Discrete Math Notes','Software Engineering PYQ',
+      'Cloud Computing Slides','React.js Quick Guide','Graph Theory Solutions','Probability \u0026 Stats Formula Sheet'
+    ];
+    const resources = [];
+    for (let i = 0; i < resourceTitles.length; i++) {
+      const subj = randomEl(subjects);
+      resources.push({
+        id: DB.genId(),
+        title: resourceTitles[i],
+        description: `Comprehensive study material for ${subj}`,
+        subject: subj,
+        type: randomEl(resourceTypes),
+        fileData: null,
+        fileName: resourceTitles[i].toLowerCase().replace(/\s+/g,'_') + '.pdf',
+        fileSize: Math.floor(Math.random() * 4000000) + 100000,
+        fileType: 'application/pdf',
+        uploader: randomEl(firstNames) + ' ' + randomEl(lastNames),
+        uploadDate: randomDate(60),
+        downloads: Math.floor(Math.random() * 300),
+        status: randomEl(resourceStatuses),
+        timestamp: randomDate(60)
+      });
+    }
+    DB.set('resources', resources);
+
+    Logger.log('Generated dummy data', 'System');
+  }
+
+  return { generate };
+})();
+
+/* ============================================
+   AUTH MODULE
+   ============================================ */
+const Auth = (() => {
+  const DEFAULT_PW = 'studyfix@admin2024';
+  const overlay = document.getElementById('loginOverlay');
+  const app = document.getElementById('app');
+
+  function getPassword() {
+    return localStorage.getItem('adminPassword') || DEFAULT_PW;
+  }
+
+  function isLoggedIn() {
+    return localStorage.getItem('adminLoggedIn') === 'true';
+  }
+
+  function login(pw) {
+    if (pw === getPassword()) {
+      localStorage.setItem('adminLoggedIn', 'true');
+      overlay.classList.add('hidden');
+      app.style.display = 'flex';
+      Logger.log('Admin logged in', 'Auth');
+      App.init();
+      return true;
+    }
+    return false;
+  }
+
+  function logout() {
+    localStorage.removeItem('adminLoggedIn');
+    overlay.classList.remove('hidden');
+    app.style.display = 'none';
+    Logger.log('Admin logged out', 'Auth');
+  }
+
+  function changePassword(current, newPw, confirmPw) {
+    if (current !== getPassword()) return { ok: false, msg: 'Current password is incorrect' };
+    if (newPw.length < 6) return { ok: false, msg: 'Password must be at least 6 characters' };
+    if (newPw !== confirmPw) return { ok: false, msg: 'Passwords do not match' };
+    localStorage.setItem('adminPassword', newPw);
+    Logger.log('Changed admin password', 'Settings');
+    return { ok: true, msg: 'Password changed successfully' };
+  }
+
+  function checkSession() {
+    if (isLoggedIn()) {
+      overlay.classList.add('hidden');
+      app.style.display = 'flex';
+      App.init();
+    }
+  }
+
+  return { login, logout, changePassword, checkSession };
+})();
+
+/* ============================================
+   THEME MODULE
+   ============================================ */
+const Theme = (() => {
+  const toggle = document.getElementById('themeToggle');
+
+  function get() { return localStorage.getItem('adminTheme') || 'dark'; }
+
+  function set(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('adminTheme', t);
+    toggle.textContent = t === 'dark' ? '🌙' : '☀️';
+  }
+
+  function init() {
+    set(get());
+    toggle.addEventListener('click', () => {
+      set(get() === 'dark' ? 'light' : 'dark');
+    });
+  }
+
+  return { init };
+})();
+
+/* ============================================
+   NAVIGATION / SPA ROUTER
+   ============================================ */
+const Router = (() => {
+  const titleMap = {
+    dashboard: 'Dashboard', users: 'User Management', mentors: 'Mentor Management',
+    sessions: 'Session Management', notes: 'Notes Management', resources: 'Resources & Uploads',
+    announcements: 'Announcements', reports: 'Reports & Analytics', settings: 'Settings'
+  };
+
+  function navigate(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const pageEl = document.getElementById(`page-${page}`);
+    if (pageEl) {
+      pageEl.classList.add('active');
+      document.querySelector(`[data-page="${page}"]`).classList.add('active');
+      document.getElementById('topbarTitle').textContent = titleMap[page] || page;
+      document.title = `StudyFix Admin — ${titleMap[page] || page}`;
+      // Close sidebar on mobile
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebarOverlay').classList.remove('visible');
+      // Refresh page data
+      Pages[page] && Pages[page]();
+    }
+  }
+
+  function init() {
+    document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
+      btn.addEventListener('click', () => navigate(btn.dataset.page));
+    });
+  }
+
+  return { navigate, init };
+})();
+
+/* ============================================
+   PAGE MODULES
+   ============================================ */
+const Pages = {};
+
+/* ----- DASHBOARD ----- */
+Pages.dashboard = function() {
+  const users = DB.get('users');
+  const mentors = DB.get('mentors');
+  const sessions = DB.get('sessions');
+  const notes = DB.get('notes');
+
+  // KPI Cards
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card" data-color="accent">
+      <div class="kpi-icon">👥</div>
+      <div class="kpi-value">${users.length}</div>
+      <div class="kpi-label">Total Users</div>
+    </div>
+    <div class="kpi-card" data-color="success">
+      <div class="kpi-icon">🎓</div>
+      <div class="kpi-value">${mentors.length}</div>
+      <div class="kpi-label">Active Mentors</div>
+    </div>
+    <div class="kpi-card" data-color="info">
+      <div class="kpi-icon">📅</div>
+      <div class="kpi-value">${sessions.length}</div>
+      <div class="kpi-label">Total Sessions</div>
+    </div>
+    <div class="kpi-card" data-color="warning">
+      <div class="kpi-icon">📝</div>
+      <div class="kpi-value">${notes.length}</div>
+      <div class="kpi-label">Study Notes</div>
+    </div>
+  `;
+
+  // Activity Feed
+  const logs = Logger.getRecent(5);
+  const feedEl = document.getElementById('activityFeed');
+  if (logs.length) {
+    feedEl.innerHTML = `<ul class="activity-feed">${logs.map(l => `
+      <li class="activity-item">
+        <div class="activity-dot"></div>
+        <div>
+          <div class="activity-text">${l.action} <span style="color:var(--text-muted)">· ${l.target}</span></div>
+          <div class="activity-time">${timeAgo(l.timestamp)}</div>
+        </div>
+      </li>`).join('')}</ul>`;
+  } else {
+    feedEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📋</div><h3>No activity yet</h3><p>Admin actions will appear here</p></div>`;
+  }
+
+  // Quick stats
+  const completedSessions = sessions.filter(s => s.status === 'completed').length;
+  const pendingMentors = mentors.filter(m => m.status === 'pending').length;
+  const pendingNotes = notes.filter(n => n.status === 'pending').length;
+  const bannedUsers = users.filter(u => u.status === 'banned').length;
+  document.getElementById('quickStats').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);">
+        <span style="color:var(--text-secondary);font-size:14px;">Completed Sessions</span>
+        <span style="font-weight:700;font-size:18px;color:var(--success);">${completedSessions}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);">
+        <span style="color:var(--text-secondary);font-size:14px;">Pending Mentor Apps</span>
+        <span style="font-weight:700;font-size:18px;color:var(--warning);">${pendingMentors}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);">
+        <span style="color:var(--text-secondary);font-size:14px;">Pending Notes</span>
+        <span style="font-weight:700;font-size:18px;color:var(--warning);">${pendingNotes}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;">
+        <span style="color:var(--text-secondary);font-size:14px;">Banned Users</span>
+        <span style="font-weight:700;font-size:18px;color:var(--danger);">${bannedUsers}</span>
+      </div>
+    </div>
+  `;
+};
+
+/* ----- USERS ----- */
+Pages.users = function() {
+  const search = document.getElementById('userSearch').value.toLowerCase();
+  const roleFilter = document.getElementById('userRoleFilter').value;
+  const statusFilter = document.getElementById('userStatusFilter').value;
+
+  let data = DB.get('users');
+  if (search) data = data.filter(u => u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search));
+  if (roleFilter) data = data.filter(u => u.role === roleFilter);
+  if (statusFilter) data = data.filter(u => u.status === statusFilter);
+
+  const columns = [
+    { key: 'name', label: 'Name' },
+    { key: 'email', label: 'Email' },
+    { key: 'role', label: 'Role', render: u => `<span class="badge badge-${u.role === 'mentor' ? 'info' : 'active'}">${u.role}</span>` },
+    { key: 'joinDate', label: 'Joined', render: u => formatDate(u.joinDate) },
+    { key: 'status', label: 'Status', render: u => `<span class="badge badge-${u.status}">${u.status}</span>` }
+  ];
+
+  TableRenderer.render('usersTableContainer', columns, data, (u) => `
+    <button class="btn-icon" title="View" onclick="UserActions.view('${u.id}')">👁️</button>
+    <button class="btn-icon" title="${u.status === 'banned' ? 'Unban' : 'Ban'}" onclick="UserActions.toggleBan('${u.id}')">${u.status === 'banned' ? '✅' : '🚫'}</button>
+    ${u.role === 'student' ? `<button class="btn-icon" title="Promote to Mentor" onclick="UserActions.promote('${u.id}')">⬆️</button>` : ''}
+    <button class="btn-icon" title="Delete" onclick="UserActions.remove('${u.id}')">🗑️</button>
+  `);
+};
+
+const UserActions = {
+  view(id) {
+    const u = DB.findRecord('users', id);
+    if (!u) return;
+    Modal.open('User Details', `
+      <div class="user-detail-grid">
+        <div class="user-detail-item"><label>Name</label><span>${u.name}</span></div>
+        <div class="user-detail-item"><label>Email</label><span>${u.email}</span></div>
+        <div class="user-detail-item"><label>Role</label><span>${u.role}</span></div>
+        <div class="user-detail-item"><label>Status</label><span>${u.status}</span></div>
+        <div class="user-detail-item"><label>Joined</label><span>${formatDate(u.joinDate)}</span></div>
+        <div class="user-detail-item"><label>User ID</label><span style="font-size:12px;color:var(--text-muted)">${u.id}</span></div>
+      </div>
+    `);
+  },
+  toggleBan(id) {
+    const u = DB.findRecord('users', id);
+    if (!u) return;
+    const action = u.status === 'banned' ? 'unban' : 'ban';
+    Modal.confirm(
+      `${action === 'ban' ? 'Ban' : 'Unban'} User`,
+      `Are you sure you want to ${action} <strong>${u.name}</strong>?`,
+      () => {
+        DB.updateRecord('users', id, { status: action === 'ban' ? 'banned' : 'active' });
+        Logger.log(`${action === 'ban' ? 'Banned' : 'Unbanned'} user ${u.name}`, 'Users');
+        Toast.show(`User ${u.name} has been ${action === 'ban' ? 'banned' : 'unbanned'}`, action === 'ban' ? 'warning' : 'success');
+        Pages.users();
+      }
+    );
+  },
+  promote(id) {
+    const u = DB.findRecord('users', id);
+    if (!u) return;
+    Modal.confirm(
+      'Promote to Mentor',
+      `Promote <strong>${u.name}</strong> to mentor role?`,
+      () => {
+        DB.updateRecord('users', id, { role: 'mentor' });
+        DB.addRecord('mentors', {
+          userId: u.id, name: u.name, email: u.email,
+          subject: 'Unassigned', rating: '0.0', sessionsCompleted: 0,
+          status: 'approved', bio: ''
+        });
+        Logger.log(`Promoted ${u.name} to mentor`, 'Users');
+        Toast.show(`${u.name} is now a mentor`, 'success');
+        Pages.users();
+      },
+      '⬆️'
+    );
+  },
+  remove(id) {
+    const u = DB.findRecord('users', id);
+    if (!u) return;
+    Modal.confirm(
+      'Delete User',
+      `Permanently delete <strong>${u.name}</strong>? This cannot be undone.`,
+      () => {
+        DB.deleteRecord('users', id);
+        // Also delete from mentors if applicable
+        const mentors = DB.get('mentors').filter(m => m.userId !== id);
+        DB.set('mentors', mentors);
+        Logger.log(`Deleted user ${u.name}`, 'Users');
+        Toast.show(`User ${u.name} deleted`, 'error');
+        Pages.users();
+      },
+      '🗑️'
+    );
+  }
+};
+
+/* ----- MENTORS ----- */
+Pages.mentors = function() {
+  const search = document.getElementById('mentorSearch').value.toLowerCase();
+  const statusFilter = document.getElementById('mentorStatusFilter').value;
+
+  let data = DB.get('mentors');
+  if (search) data = data.filter(m => m.name.toLowerCase().includes(search) || m.subject.toLowerCase().includes(search));
+  if (statusFilter) data = data.filter(m => m.status === statusFilter);
+
+  const columns = [
+    { key: 'name', label: 'Name' },
+    { key: 'subject', label: 'Subject' },
+    { key: 'rating', label: 'Rating', render: m => `⭐ ${m.rating}` },
+    { key: 'sessionsCompleted', label: 'Sessions' },
+    { key: 'status', label: 'Status', render: m => `<span class="badge badge-${m.status}">${m.status}</span>` }
+  ];
+
+  TableRenderer.render('mentorsTableContainer', columns, data, (m) => {
+    let btns = `<button class="btn-icon" title="Edit" onclick="MentorActions.edit('${m.id}')">✏️</button>`;
+    if (m.status === 'pending') {
+      btns += `<button class="btn-icon" title="Approve" onclick="MentorActions.approve('${m.id}')">✅</button>`;
+      btns += `<button class="btn-icon" title="Reject" onclick="MentorActions.reject('${m.id}')">❌</button>`;
+    }
+    btns += `<button class="btn-icon" title="Remove Mentor Role" onclick="MentorActions.remove('${m.id}')">🗑️</button>`;
+    return btns;
+  });
+};
+
+const MentorActions = {
+  approve(id) {
+    const m = DB.findRecord('mentors', id);
+    if (!m) return;
+    DB.updateRecord('mentors', id, { status: 'approved' });
+    Logger.log(`Approved mentor ${m.name}`, 'Mentors');
+    Toast.show(`${m.name} approved as mentor`, 'success');
+    Pages.mentors();
+  },
+  reject(id) {
+    const m = DB.findRecord('mentors', id);
+    if (!m) return;
+    Modal.confirm('Reject Mentor', `Reject <strong>${m.name}</strong>'s mentor application?`, () => {
+      DB.updateRecord('mentors', id, { status: 'rejected' });
+      Logger.log(`Rejected mentor ${m.name}`, 'Mentors');
+      Toast.show(`${m.name}'s application rejected`, 'warning');
+      Pages.mentors();
+    });
+  },
+  edit(id) {
+    const m = DB.findRecord('mentors', id);
+    if (!m) return;
+    Modal.open('Edit Mentor', `
+      <div class="form-group">
+        <label for="editMentorName">Name</label>
+        <input type="text" class="form-control" id="editMentorName" value="${m.name}">
+      </div>
+      <div class="form-group">
+        <label for="editMentorSubject">Subject</label>
+        <input type="text" class="form-control" id="editMentorSubject" value="${m.subject}">
+      </div>
+      <div class="form-group">
+        <label for="editMentorBio">Bio</label>
+        <textarea class="form-control" id="editMentorBio">${m.bio || ''}</textarea>
+      </div>
+    `, `
+      <button class="btn btn-secondary modal-cancel-action" type="button">Cancel</button>
+      <button class="btn btn-primary" id="saveMentorEdit" type="button">Save Changes</button>
+    `);
+    document.querySelector('.modal-cancel-action').addEventListener('click', Modal.close);
+    document.getElementById('saveMentorEdit').addEventListener('click', () => {
+      const name = document.getElementById('editMentorName').value.trim();
+      const subject = document.getElementById('editMentorSubject').value.trim();
+      const bio = document.getElementById('editMentorBio').value.trim();
+      if (!name || !subject) { Toast.show('Name and Subject are required', 'error'); return; }
+      DB.updateRecord('mentors', id, { name, subject, bio });
+      Logger.log(`Updated mentor ${name}`, 'Mentors');
+      Toast.show('Mentor updated successfully', 'success');
+      Modal.close();
+      Pages.mentors();
+    });
+  },
+  remove(id) {
+    const m = DB.findRecord('mentors', id);
+    if (!m) return;
+    Modal.confirm('Remove Mentor', `Remove mentor role from <strong>${m.name}</strong>?`, () => {
+      DB.deleteRecord('mentors', id);
+      // Downgrade user role
+      if (m.userId) {
+        DB.updateRecord('users', m.userId, { role: 'student' });
+      }
+      Logger.log(`Removed mentor role from ${m.name}`, 'Mentors');
+      Toast.show(`${m.name} is no longer a mentor`, 'warning');
+      Pages.mentors();
+    });
+  }
+};
+
+/* ----- SESSIONS ----- */
+Pages.sessions = function() {
+  const search = document.getElementById('sessionSearch').value.toLowerCase();
+  const statusFilter = document.getElementById('sessionStatusFilter').value;
+
+  let data = DB.get('sessions');
+  if (search) data = data.filter(s =>
+    s.studentName.toLowerCase().includes(search) ||
+    s.mentorName.toLowerCase().includes(search) ||
+    s.subject.toLowerCase().includes(search)
+  );
+  if (statusFilter) data = data.filter(s => s.status === statusFilter);
+
+  const columns = [
+    { key: 'studentName', label: 'Student' },
+    { key: 'mentorName', label: 'Mentor' },
+    { key: 'subject', label: 'Subject' },
+    { key: 'date', label: 'Date', render: s => formatDate(s.date) },
+    { key: 'status', label: 'Status', render: s => `<span class="badge badge-${s.status}">${s.status}</span>` }
+  ];
+
+  TableRenderer.render('sessionsTableContainer', columns, data, (s) => {
+    let btns = '';
+    if (s.status === 'scheduled') {
+      btns += `<button class="btn btn-sm btn-success" onclick="SessionActions.complete('${s.id}')">✓ Complete</button>`;
+      btns += `<button class="btn btn-sm btn-danger" onclick="SessionActions.cancel('${s.id}')">✗ Cancel</button>`;
+    }
+    if (!btns) btns = '<span style="color:var(--text-muted);font-size:12px;">No action</span>';
+    return btns;
+  });
+};
+
+const SessionActions = {
+  complete(id) {
+    DB.updateRecord('sessions', id, { status: 'completed' });
+    Logger.log('Marked session as completed', 'Sessions');
+    Toast.show('Session marked as completed', 'success');
+    Pages.sessions();
+  },
+  cancel(id) {
+    Modal.confirm('Cancel Session', 'Are you sure you want to cancel this session?', () => {
+      DB.updateRecord('sessions', id, { status: 'cancelled' });
+      Logger.log('Cancelled a session', 'Sessions');
+      Toast.show('Session cancelled', 'warning');
+      Pages.sessions();
+    });
+  }
+};
+
+/* ----- NOTES ----- */
+Pages.notes = function() {
+  const search = document.getElementById('noteSearch').value.toLowerCase();
+  const statusFilter = document.getElementById('noteStatusFilter').value;
+
+  let data = DB.get('notes');
+  if (search) data = data.filter(n =>
+    n.title.toLowerCase().includes(search) ||
+    n.uploader.toLowerCase().includes(search) ||
+    n.subject.toLowerCase().includes(search)
+  );
+  if (statusFilter) data = data.filter(n => n.status === statusFilter);
+
+  const columns = [
+    { key: 'title', label: 'Title' },
+    { key: 'uploader', label: 'Uploader' },
+    { key: 'subject', label: 'Subject' },
+    { key: 'uploadDate', label: 'Date', render: n => formatDate(n.uploadDate) },
+    { key: 'downloads', label: 'Downloads' },
+    { key: 'status', label: 'Status', render: n => `<span class="badge badge-${n.status}">${n.status}</span>` }
+  ];
+
+  TableRenderer.render('notesTableContainer', columns, data, (n) => {
+    let btns = '';
+    if (n.status === 'pending') {
+      btns += `<button class="btn-icon" title="Approve" onclick="NoteActions.approve('${n.id}')">✅</button>`;
+      btns += `<button class="btn-icon" title="Reject" onclick="NoteActions.reject('${n.id}')">❌</button>`;
+    }
+    btns += `<button class="btn-icon" title="Delete" onclick="NoteActions.remove('${n.id}')">🗑️</button>`;
+    return btns;
+  });
+};
+
+const NoteActions = {
+  approve(id) {
+    const n = DB.findRecord('notes', id);
+    DB.updateRecord('notes', id, { status: 'approved' });
+    Logger.log(`Approved note "${n ? n.title : id}"`, 'Notes');
+    Toast.show('Note approved', 'success');
+    Pages.notes();
+  },
+  reject(id) {
+    const n = DB.findRecord('notes', id);
+    DB.updateRecord('notes', id, { status: 'rejected' });
+    Logger.log(`Rejected note "${n ? n.title : id}"`, 'Notes');
+    Toast.show('Note rejected', 'warning');
+    Pages.notes();
+  },
+  remove(id) {
+    const n = DB.findRecord('notes', id);
+    Modal.confirm('Delete Note', `Delete <strong>${n ? n.title : 'this note'}</strong> permanently?`, () => {
+      DB.deleteRecord('notes', id);
+      Logger.log(`Deleted note "${n ? n.title : id}"`, 'Notes');
+      Toast.show('Note deleted', 'error');
+      Pages.notes();
+    });
+  }
+};
+
+/* ----- RESOURCES ----- */
+Pages.resources = function() {
+  const search = document.getElementById('resourceSearch').value.toLowerCase();
+  const typeFilter = document.getElementById('resourceTypeFilter').value;
+  const subjectFilter = document.getElementById('resourceSubjectFilter').value;
+  const statusFilter = document.getElementById('resourceStatusFilter').value;
+
+  let data = DB.get('resources');
+
+  // Populate subject filter dynamically
+  const allSubjects = [...new Set(DB.get('resources').map(r => r.subject).filter(Boolean))];
+  const subjectSelect = document.getElementById('resourceSubjectFilter');
+  const currentSubjVal = subjectSelect.value;
+  subjectSelect.innerHTML = '<option value="">All Subjects</option>' + allSubjects.map(s => `<option value="${s}"${s === currentSubjVal ? ' selected' : ''}>${s}</option>`).join('');
+
+  if (search) data = data.filter(r => r.title.toLowerCase().includes(search) || r.subject.toLowerCase().includes(search) || (r.uploader||'').toLowerCase().includes(search));
+  if (typeFilter) data = data.filter(r => r.type === typeFilter);
+  if (subjectFilter) data = data.filter(r => r.subject === subjectFilter);
+  if (statusFilter) data = data.filter(r => r.status === statusFilter);
+
+  // Stats cards
+  const all = DB.get('resources');
+  const statsGrid = document.getElementById('resourceStatsGrid');
+  const totalDown = all.reduce((s, r) => s + (r.downloads || 0), 0);
+  statsGrid.innerHTML = `
+    <div class="resource-stat-card"><div class="stat-value" style="color:var(--info)">${all.length}</div><div class="stat-label">Total Resources</div></div>
+    <div class="resource-stat-card"><div class="stat-value" style="color:var(--warning)">${all.filter(r => r.type === 'PYQ').length}</div><div class="stat-label">PYQs</div></div>
+    <div class="resource-stat-card"><div class="stat-value" style="color:var(--success)">${all.filter(r => r.status === 'approved').length}</div><div class="stat-label">Approved</div></div>
+    <div class="resource-stat-card"><div class="stat-value" style="color:var(--accent)">${totalDown}</div><div class="stat-label">Downloads</div></div>
+  `;
+
+  const fileIcon = ResourceActions.getFileIcon;
+  const typeClass = (t) => 'rtype-' + (t||'other').toLowerCase();
+
+  const columns = [
+    { key: 'title', label: 'Title', render: r => `<div style="display:flex;align-items:center;gap:8px;"><span class="file-type-icon">${fileIcon(r.fileName)}</span> ${r.title}</div>` },
+    { key: 'type', label: 'Type', render: r => `<span class="resource-type-badge ${typeClass(r.type)}">${r.type}</span>` },
+    { key: 'subject', label: 'Subject' },
+    { key: 'uploadDate', label: 'Uploaded', render: r => formatDate(r.uploadDate || r.timestamp) },
+    { key: 'downloads', label: 'Downloads', render: r => `<span style="font-weight:700">${r.downloads || 0}</span>` },
+    { key: 'status', label: 'Status', render: r => `<span class="badge badge-${r.status}">${r.status}</span>` }
+  ];
+
+  TableRenderer.render('resourcesTableContainer', columns, data, (r) => {
+    let btns = `<button class="btn-icon" title="Preview" onclick="ResourceActions.preview('${r.id}')">👁️</button>`;
+    btns += `<button class="btn-icon" title="Download" onclick="ResourceActions.download('${r.id}')">⬇️</button>`;
+    btns += `<button class="btn-icon" title="Edit" onclick="ResourceActions.edit('${r.id}')">✏️</button>`;
+    if (r.status === 'pending') {
+      btns += `<button class="btn-icon" title="Approve" onclick="ResourceActions.approve('${r.id}')">✅</button>`;
+      btns += `<button class="btn-icon" title="Reject" onclick="ResourceActions.reject('${r.id}')">❌</button>`;
+    }
+    btns += `<button class="btn-icon" title="Delete" onclick="ResourceActions.remove('${r.id}')">🗑️</button>`;
+    return btns;
+  });
+};
+
+const ResourceActions = {
+  _pendingFile: null,
+
+  getFileIcon(fileName) {
+    if (!fileName) return '📄';
+    const ext = fileName.split('.').pop().toLowerCase();
+    const map = { pdf: '📕', doc: '📘', docx: '📘', ppt: '📙', pptx: '📙', xls: '📗', xlsx: '📗', txt: '📃', zip: '📦', rar: '📦', jpg: '🖼️', jpeg: '🖼️', png: '🖼️', gif: '🖼️', webp: '🖼️', svg: '🖼️', mp4: '🎬', mp3: '🎵', py: '🐍', js: '💛', html: '🌐', css: '🎨', java: '☕', c: '⚙️', cpp: '⚙️' };
+    return map[ext] || '📄';
+  },
+
+  formatFileSize(bytes) {
+    if (!bytes) return '—';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  },
+
+  openUploadModal(editId) {
+    const isEdit = !!editId;
+    const existing = isEdit ? DB.findRecord('resources', editId) : null;
+    ResourceActions._pendingFile = null;
+
+    Modal.open(isEdit ? 'Edit Resource' : '📤 Upload Resource', `
+      <div class="form-group">
+        <label for="resTitle">Title *</label>
+        <input type="text" class="form-control" id="resTitle" placeholder="e.g. DSA Complete Notes" value="${existing ? existing.title : ''}">
+      </div>
+      <div class="form-group">
+        <label for="resDesc">Description</label>
+        <textarea class="form-control" id="resDesc" placeholder="Brief description of the resource...">${existing ? (existing.description || '') : ''}</textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="form-group">
+          <label for="resSubject">Subject *</label>
+          <input type="text" class="form-control" id="resSubject" placeholder="e.g. Data Structures" value="${existing ? existing.subject : ''}">
+        </div>
+        <div class="form-group">
+          <label for="resType">Type *</label>
+          <select class="form-control" id="resType">
+            <option value="Notes"${existing && existing.type === 'Notes' ? ' selected' : ''}>📝 Notes</option>
+            <option value="PYQ"${existing && existing.type === 'PYQ' ? ' selected' : ''}>📋 PYQ</option>
+            <option value="Assignment"${existing && existing.type === 'Assignment' ? ' selected' : ''}>📎 Assignment</option>
+            <option value="Other"${existing && existing.type === 'Other' ? ' selected' : ''}>📦 Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="resUploader">Uploader Name</label>
+        <input type="text" class="form-control" id="resUploader" placeholder="Admin" value="${existing ? (existing.uploader || 'Admin') : 'Admin'}">
+      </div>
+      ${!isEdit ? `
+      <div class="form-group">
+        <label>File Upload</label>
+        <div class="upload-zone" id="uploadDropZone">
+          <div class="upload-zone-icon">📂</div>
+          <h3>Drag & drop a file here</h3>
+          <p>or click to browse · Max 4MB recommended</p>
+          <input type="file" id="resFileInput">
+        </div>
+        <div id="uploadFilePreview"></div>
+      </div>` : `<p style="font-size:13px;color:var(--text-muted)">📎 Current file: <strong>${existing.fileName || 'None'}</strong></p>`}
+    `, `
+      <button class="btn btn-secondary modal-cancel-action" type="button">Cancel</button>
+      <button class="btn btn-primary" id="saveResourceBtn" type="button">${isEdit ? 'Save Changes' : 'Upload Resource'}</button>
+    `);
+
+    document.querySelector('.modal-cancel-action').addEventListener('click', Modal.close);
+
+    // Drag and drop
+    if (!isEdit) {
+      const dropZone = document.getElementById('uploadDropZone');
+      const fileInput = document.getElementById('resFileInput');
+
+      ['dragenter', 'dragover'].forEach(evt => {
+        dropZone.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.add('drag-over'); });
+      });
+      ['dragleave', 'drop'].forEach(evt => {
+        dropZone.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('drag-over'); });
+      });
+      dropZone.addEventListener('drop', (e) => {
+        const file = e.dataTransfer.files[0];
+        if (file) ResourceActions._handleFile(file);
+      });
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) ResourceActions._handleFile(file);
+      });
+    }
+
+    // Save
+    document.getElementById('saveResourceBtn').addEventListener('click', () => {
+      const title = document.getElementById('resTitle').value.trim();
+      const description = document.getElementById('resDesc').value.trim();
+      const subject = document.getElementById('resSubject').value.trim();
+      const type = document.getElementById('resType').value;
+      const uploader = document.getElementById('resUploader').value.trim() || 'Admin';
+
+      if (!title) { Toast.show('Title is required', 'error'); return; }
+      if (!subject) { Toast.show('Subject is required', 'error'); return; }
+
+      if (isEdit) {
+        DB.updateRecord('resources', editId, { title, description, subject, type, uploader });
+        Logger.log(`Updated resource "${title}"`, 'Resources');
+        Toast.show('Resource updated', 'success');
+      } else {
+        const record = {
+          title, description, subject, type, uploader,
+          fileData: ResourceActions._pendingFile ? ResourceActions._pendingFile.data : null,
+          fileName: ResourceActions._pendingFile ? ResourceActions._pendingFile.name : null,
+          fileSize: ResourceActions._pendingFile ? ResourceActions._pendingFile.size : 0,
+          fileType: ResourceActions._pendingFile ? ResourceActions._pendingFile.type : null,
+          uploadDate: new Date().toISOString(),
+          downloads: 0,
+          status: 'pending'
+        };
+        DB.addRecord('resources', record);
+        Logger.log(`Uploaded resource "${title}"`, 'Resources');
+        Toast.show('Resource uploaded successfully', 'success');
+      }
+      ResourceActions._pendingFile = null;
+      Modal.close();
+      Pages.resources();
+    });
+  },
+
+  _handleFile(file) {
+    if (file.size > 5 * 1024 * 1024) {
+      Toast.show('File too large (max 5MB for localStorage)', 'warning');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      ResourceActions._pendingFile = {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        data: e.target.result
+      };
+      const preview = document.getElementById('uploadFilePreview');
+      if (preview) {
+        preview.innerHTML = `
+          <div class="upload-file-info">
+            <span class="upload-file-icon">${ResourceActions.getFileIcon(file.name)}</span>
+            <div class="upload-file-details">
+              <div class="fname">${file.name}</div>
+              <div class="fsize">${ResourceActions.formatFileSize(file.size)}</div>
+            </div>
+            <button class="upload-file-remove" id="removeUploadFile" type="button">&times;</button>
+          </div>`;
+        document.getElementById('removeUploadFile').addEventListener('click', () => {
+          ResourceActions._pendingFile = null;
+          preview.innerHTML = '';
+          const input = document.getElementById('resFileInput');
+          if (input) input.value = '';
+        });
+      }
+    };
+    reader.readAsDataURL(file);
+  },
+
+  preview(id) {
+    const r = DB.findRecord('resources', id);
+    if (!r) return;
+    let content = '';
+    if (r.fileData) {
+      const ft = (r.fileType || '').toLowerCase();
+      if (ft.startsWith('image/')) {
+        content = `<img class="preview-image" src="${r.fileData}" alt="${r.title}">`;
+      } else if (ft === 'application/pdf') {
+        content = `<iframe class="preview-iframe" src="${r.fileData}"></iframe>`;
+      } else {
+        content = `<div style="text-align:center;padding:40px;"><div style="font-size:64px;margin-bottom:16px;">${ResourceActions.getFileIcon(r.fileName)}</div><h3>${r.fileName}</h3><p style="color:var(--text-muted);margin-top:8px;">Preview not available for this file type</p><button class="btn btn-primary" style="margin-top:16px;" onclick="ResourceActions.download('${r.id}')">⬇️ Download File</button></div>`;
+      }
+    } else {
+      content = `<div style="text-align:center;padding:40px;"><div style="font-size:64px;margin-bottom:16px;">📄</div><h3>${r.title}</h3><p style="color:var(--text-muted);margin-top:8px;">No file attached</p></div>`;
+    }
+
+    const details = `
+      <div style="margin-bottom:16px;">
+        <div class="user-detail-grid">
+          <div class="user-detail-item"><label>Title</label><span>${r.title}</span></div>
+          <div class="user-detail-item"><label>Type</label><span>${r.type}</span></div>
+          <div class="user-detail-item"><label>Subject</label><span>${r.subject}</span></div>
+          <div class="user-detail-item"><label>Uploader</label><span>${r.uploader || 'Admin'}</span></div>
+          <div class="user-detail-item"><label>Downloads</label><span>${r.downloads || 0}</span></div>
+          <div class="user-detail-item"><label>Status</label><span class="badge badge-${r.status}">${r.status}</span></div>
+        </div>
+        ${r.description ? `<p style="margin-top:12px;font-size:13px;color:var(--text-secondary)">${r.description}</p>` : ''}
+      </div>
+      ${content}
+    `;
+    Modal.open(`📎 ${r.title}`, details);
+  },
+
+  download(id) {
+    const r = DB.findRecord('resources', id);
+    if (!r) return;
+    DB.updateRecord('resources', id, { downloads: (r.downloads || 0) + 1 });
+    if (r.fileData) {
+      const a = document.createElement('a');
+      a.href = r.fileData;
+      a.download = r.fileName || 'download';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      Toast.show(`Downloaded "${r.fileName}"`, 'success');
+    } else {
+      Toast.show('No file attached to this resource', 'warning');
+    }
+    Logger.log(`Downloaded resource "${r.title}"`, 'Resources');
+    Pages.resources();
+  },
+
+  edit(id) {
+    ResourceActions.openUploadModal(id);
+  },
+
+  approve(id) {
+    const r = DB.findRecord('resources', id);
+    DB.updateRecord('resources', id, { status: 'approved' });
+    Logger.log(`Approved resource "${r ? r.title : id}"`, 'Resources');
+    Toast.show('Resource approved', 'success');
+    Pages.resources();
+  },
+
+  reject(id) {
+    const r = DB.findRecord('resources', id);
+    DB.updateRecord('resources', id, { status: 'rejected' });
+    Logger.log(`Rejected resource "${r ? r.title : id}"`, 'Resources');
+    Toast.show('Resource rejected', 'warning');
+    Pages.resources();
+  },
+
+  remove(id) {
+    const r = DB.findRecord('resources', id);
+    Modal.confirm('Delete Resource', `Delete <strong>${r ? r.title : 'this resource'}</strong> permanently?`, () => {
+      DB.deleteRecord('resources', id);
+      Logger.log(`Deleted resource "${r ? r.title : id}"`, 'Resources');
+      Toast.show('Resource deleted', 'error');
+      Pages.resources();
+    });
+  }
+};
+
+/* ----- ANNOUNCEMENTS ----- */
+Pages.announcements = function() {
+  const data = DB.get('announcements').sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+  const container = document.getElementById('announcementsList');
+
+  if (!data.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📢</div><h3>No Announcements</h3><p>Create your first announcement</p></div>`;
+    return;
+  }
+
+  const typeIcons = { info: 'ℹ️', warning: '⚠️', alert: '🚨' };
+  container.innerHTML = data.map(a => `
+    <div class="announcement-item">
+      <div class="announcement-type-icon ${a.type}">${typeIcons[a.type] || 'ℹ️'}</div>
+      <div class="announcement-content">
+        <h4>${a.title}</h4>
+        <p>${a.message}</p>
+        <div class="announcement-meta">
+          <span class="badge badge-${a.type === 'alert' ? 'alert' : a.type === 'warning' ? 'warning-type' : 'info'}">${a.type}</span>
+          &nbsp; ${formatDateTime(a.timestamp)}
+        </div>
+      </div>
+      <button class="btn-icon" title="Delete" onclick="AnnouncementActions.remove('${a.id}')">🗑️</button>
+    </div>
+  `).join('');
+};
+
+const AnnouncementActions = {
+  create() {
+    Modal.open('New Announcement', `
+      <div class="form-group">
+        <label for="annTitle">Title</label>
+        <input type="text" class="form-control" id="annTitle" placeholder="Announcement title">
+      </div>
+      <div class="form-group">
+        <label for="annMessage">Message</label>
+        <textarea class="form-control" id="annMessage" placeholder="Write your announcement..."></textarea>
+      </div>
+      <div class="form-group">
+        <label for="annType">Type</label>
+        <select class="form-control" id="annType">
+          <option value="info">ℹ️ Info</option>
+          <option value="warning">⚠️ Warning</option>
+          <option value="alert">🚨 Alert</option>
+        </select>
+      </div>
+    `, `
+      <button class="btn btn-secondary modal-cancel-action" type="button">Cancel</button>
+      <button class="btn btn-primary" id="saveAnnouncement" type="button">Publish</button>
+    `);
+    document.querySelector('.modal-cancel-action').addEventListener('click', Modal.close);
+    document.getElementById('saveAnnouncement').addEventListener('click', () => {
+      const title = document.getElementById('annTitle').value.trim();
+      const message = document.getElementById('annMessage').value.trim();
+      const type = document.getElementById('annType').value;
+      if (!title || !message) { Toast.show('Title and message are required', 'error'); return; }
+      DB.addRecord('announcements', { title, message, type });
+      Logger.log(`Created announcement "${title}"`, 'Announcements');
+      Toast.show('Announcement published', 'success');
+      Modal.close();
+      Pages.announcements();
+    });
+  },
+  remove(id) {
+    Modal.confirm('Delete Announcement', 'Delete this announcement?', () => {
+      DB.deleteRecord('announcements', id);
+      Logger.log('Deleted an announcement', 'Announcements');
+      Toast.show('Announcement deleted', 'success');
+      Pages.announcements();
+    });
+  }
+};
+
+/* ----- REPORTS ----- */
+Pages.reports = function() {
+  renderBarChart();
+  renderPieChart();
+  renderTopMentors();
+};
+
+function renderBarChart() {
+  const sessions = DB.get('sessions');
+  const weekMap = {};
+
+  sessions.forEach(s => {
+    const d = new Date(s.date);
+    const weekStart = new Date(d);
+    weekStart.setDate(d.getDate() - d.getDay());
+    const key = weekStart.toISOString().slice(0, 10);
+    weekMap[key] = (weekMap[key] || 0) + 1;
+  });
+
+  const sorted = Object.entries(weekMap).sort((a,b) => a[0].localeCompare(b[0])).slice(-8);
+  const maxVal = Math.max(...sorted.map(s => s[1]), 1);
+
+  const container = document.getElementById('barChartContainer');
+  if (!sorted.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div><h3>No data</h3><p>Session data will appear here</p></div>`;
+    return;
+  }
+
+  const bars = sorted.map(([week, count]) => {
+    const h = Math.max((count / maxVal) * 200, 8);
+    const label = new Date(week).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+    return `<div class="bar-group">
+      <div class="bar" style="height:${h}px"><span class="bar-value">${count}</span></div>
+      <span class="bar-label">${label}</span>
+    </div>`;
+  }).join('');
+
+  container.innerHTML = `<div class="bar-chart-wrapper"><div class="bar-chart">${bars}</div></div>`;
+}
+
+function renderPieChart() {
+  const sessions = DB.get('sessions');
+  const subjectMap = {};
+  sessions.forEach(s => { subjectMap[s.subject] = (subjectMap[s.subject] || 0) + 1; });
+
+  const entries = Object.entries(subjectMap).sort((a,b) => b[1] - a[1]).slice(0, 6);
+  const total = entries.reduce((sum, e) => sum + e[1], 0);
+  const container = document.getElementById('pieChartContainer');
+
+  if (!entries.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🥧</div><h3>No data</h3><p>Subject data will appear here</p></div>`;
+    return;
+  }
+
+  const colors = ['#e94560','#0f3460','#2ecc71','#f39c12','#3498db','#9b59b6'];
+  let cumulativePercent = 0;
+  const slices = entries.map(([subj, count], i) => {
+    const percent = (count / total) * 100;
+    const startAngle = (cumulativePercent / 100) * 360;
+    const endAngle = ((cumulativePercent + percent) / 100) * 360;
+    cumulativePercent += percent;
+
+    const startRad = (startAngle - 90) * Math.PI / 180;
+    const endRad = (endAngle - 90) * Math.PI / 180;
+    const largeArc = percent > 50 ? 1 : 0;
+    const x1 = 90 + 80 * Math.cos(startRad);
+    const y1 = 90 + 80 * Math.sin(startRad);
+    const x2 = 90 + 80 * Math.cos(endRad);
+    const y2 = 90 + 80 * Math.sin(endRad);
+
+    return { path: `M 90 90 L ${x1} ${y1} A 80 80 0 ${largeArc} 1 ${x2} ${y2} Z`, color: colors[i], subject: subj, count, percent };
+  });
+
+  const svg = `<svg class="pie-svg" viewBox="0 0 180 180">${
+    slices.map(s => `<path d="${s.path}" fill="${s.color}" stroke="var(--bg-card)" stroke-width="2"><title>${s.subject}: ${s.count}</title></path>`).join('')
+  }</svg>`;
+
+  const legend = slices.map(s => `
+    <div class="pie-legend-item">
+      <div class="pie-legend-dot" style="background:${s.color}"></div>
+      <span>${s.subject} <strong>(${s.percent.toFixed(0)}%)</strong></span>
+    </div>
+  `).join('');
+
+  container.innerHTML = `<div class="pie-wrapper">${svg}<div class="pie-legend">${legend}</div></div>`;
+}
+
+function renderTopMentors() {
+  const mentors = DB.get('mentors')
+    .filter(m => m.status === 'approved')
+    .sort((a,b) => (b.sessionsCompleted || 0) - (a.sessionsCompleted || 0))
+    .slice(0, 5);
+
+  const columns = [
+    { key: 'name', label: 'Mentor' },
+    { key: 'subject', label: 'Subject' },
+    { key: 'rating', label: 'Rating', render: m => `⭐ ${m.rating}` },
+    { key: 'sessionsCompleted', label: 'Sessions Completed' }
+  ];
+
+  TableRenderer.render('topMentorsTableContainer', columns, mentors);
+}
+
+/* ----- SETTINGS ----- */
+Pages.settings = function() {
+  const settings = DB.getObj('adminSettings');
+  document.getElementById('siteTitle').value = settings.siteTitle || 'StudyFix';
+  document.getElementById('siteTagline').value = settings.siteTagline || 'Peer Mentoring Platform';
+
+  const toggle = document.getElementById('maintenanceToggle');
+  if (settings.maintenanceMode) { toggle.classList.add('active'); }
+  else { toggle.classList.remove('active'); }
+};
+
+/* ============================================
+   APP INIT
+   ============================================ */
+const App = (() => {
+  function init() {
+    DB.init();
+    Theme.init();
+    Router.init();
+    bindEvents();
+    Pages.dashboard();
+  }
+
+  function bindEvents() {
+    // Hamburger
+    document.getElementById('hamburger').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebarOverlay').classList.toggle('visible');
+    });
+    document.getElementById('sidebarOverlay').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebarOverlay').classList.remove('visible');
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      Modal.confirm('Logout', 'Are you sure you want to logout?', () => Auth.logout(), '👋');
+    });
+
+    // Generate Dummy Data
+    document.getElementById('generateDummyBtn').addEventListener('click', () => {
+      Modal.confirm('Generate Dummy Data', 'This will replace all existing data with sample data. Continue?', () => {
+        DummyData.generate();
+        Toast.show('Dummy data generated successfully!', 'success');
+        Pages.dashboard();
+      }, '🔄');
+    });
+
+    // User search & filters
+    const userSearchHandler = debounce(() => Pages.users());
+    document.getElementById('userSearch').addEventListener('input', userSearchHandler);
+    document.getElementById('userRoleFilter').addEventListener('change', () => Pages.users());
+    document.getElementById('userStatusFilter').addEventListener('change', () => Pages.users());
+
+    // Mentor search & filter
+    const mentorSearchHandler = debounce(() => Pages.mentors());
+    document.getElementById('mentorSearch').addEventListener('input', mentorSearchHandler);
+    document.getElementById('mentorStatusFilter').addEventListener('change', () => Pages.mentors());
+
+    // Session search & filter
+    const sessionSearchHandler = debounce(() => Pages.sessions());
+    document.getElementById('sessionSearch').addEventListener('input', sessionSearchHandler);
+    document.getElementById('sessionStatusFilter').addEventListener('change', () => Pages.sessions());
+
+    // Notes search & filter
+    const noteSearchHandler = debounce(() => Pages.notes());
+    document.getElementById('noteSearch').addEventListener('input', noteSearchHandler);
+    document.getElementById('noteStatusFilter').addEventListener('change', () => Pages.notes());
+
+    // CSV Exports
+    document.getElementById('exportUsersBtn').addEventListener('click', () => {
+      CSVExport.exportData('studyfix_users.csv',
+        [{ key: 'name', label: 'Name' },{ key: 'email', label: 'Email' },{ key: 'role', label: 'Role' },{ key: 'joinDate', label: 'Joined' },{ key: 'status', label: 'Status' }],
+        DB.get('users'));
+    });
+    document.getElementById('exportMentorsBtn').addEventListener('click', () => {
+      CSVExport.exportData('studyfix_mentors.csv',
+        [{ key: 'name', label: 'Name' },{ key: 'subject', label: 'Subject' },{ key: 'rating', label: 'Rating' },{ key: 'sessionsCompleted', label: 'Sessions' },{ key: 'status', label: 'Status' }],
+        DB.get('mentors'));
+    });
+    document.getElementById('exportSessionsBtn').addEventListener('click', () => {
+      CSVExport.exportData('studyfix_sessions.csv',
+        [{ key: 'studentName', label: 'Student' },{ key: 'mentorName', label: 'Mentor' },{ key: 'subject', label: 'Subject' },{ key: 'date', label: 'Date' },{ key: 'status', label: 'Status' }],
+        DB.get('sessions'));
+    });
+    document.getElementById('exportNotesBtn').addEventListener('click', () => {
+      CSVExport.exportData('studyfix_notes.csv',
+        [{ key: 'title', label: 'Title' },{ key: 'uploader', label: 'Uploader' },{ key: 'subject', label: 'Subject' },{ key: 'uploadDate', label: 'Date' },{ key: 'downloads', label: 'Downloads' },{ key: 'status', label: 'Status' }],
+        DB.get('notes'));
+    });
+
+    // Announcements
+    document.getElementById('newAnnouncementBtn').addEventListener('click', () => AnnouncementActions.create());
+
+    // Resources
+    const resourceSearchHandler = debounce(() => Pages.resources());
+    document.getElementById('resourceSearch').addEventListener('input', resourceSearchHandler);
+    document.getElementById('resourceTypeFilter').addEventListener('change', () => Pages.resources());
+    document.getElementById('resourceSubjectFilter').addEventListener('change', () => Pages.resources());
+    document.getElementById('resourceStatusFilter').addEventListener('change', () => Pages.resources());
+    document.getElementById('uploadResourceBtn').addEventListener('click', () => ResourceActions.openUploadModal());
+    document.getElementById('exportResourcesBtn').addEventListener('click', () => {
+      CSVExport.exportData('studyfix_resources.csv',
+        [{ key: 'title', label: 'Title' },{ key: 'type', label: 'Type' },{ key: 'subject', label: 'Subject' },{ key: 'uploader', label: 'Uploader' },{ key: 'uploadDate', label: 'Date' },{ key: 'downloads', label: 'Downloads' },{ key: 'status', label: 'Status' }],
+        DB.get('resources'));
+    });
+
+    // Settings - Change Password
+    document.getElementById('changePwBtn').addEventListener('click', () => {
+      const result = Auth.changePassword(
+        document.getElementById('currentPw').value,
+        document.getElementById('newPw').value,
+        document.getElementById('confirmPw').value
+      );
+      if (result.ok) {
+        Toast.show(result.msg, 'success');
+        document.getElementById('currentPw').value = '';
+        document.getElementById('newPw').value = '';
+        document.getElementById('confirmPw').value = '';
+      } else {
+        Toast.show(result.msg, 'error');
+      }
+    });
+
+    // Settings - Save Site
+    document.getElementById('saveSiteBtn').addEventListener('click', () => {
+      const settings = DB.getObj('adminSettings');
+      settings.siteTitle = document.getElementById('siteTitle').value.trim() || 'StudyFix';
+      settings.siteTagline = document.getElementById('siteTagline').value.trim() || 'Peer Mentoring Platform';
+      DB.setObj('adminSettings', settings);
+      Logger.log('Updated site settings', 'Settings');
+      Toast.show('Site settings saved', 'success');
+    });
+
+    // Settings - Maintenance toggle
+    document.getElementById('maintenanceToggle').addEventListener('click', function() {
+      this.classList.toggle('active');
+      const settings = DB.getObj('adminSettings');
+      settings.maintenanceMode = this.classList.contains('active');
+      DB.setObj('adminSettings', settings);
+      Logger.log(`Maintenance mode ${settings.maintenanceMode ? 'enabled' : 'disabled'}`, 'Settings');
+      Toast.show(`Maintenance mode ${settings.maintenanceMode ? 'enabled' : 'disabled'}`, settings.maintenanceMode ? 'warning' : 'success');
+    });
+
+    // Settings - Generate Dummy (from settings page)
+    document.getElementById('generateDummyBtn2').addEventListener('click', () => {
+      Modal.confirm('Generate Dummy Data', 'Replace all data with sample data?', () => {
+        DummyData.generate();
+        Toast.show('Dummy data generated', 'success');
+        Pages.settings();
+      }, '🔄');
+    });
+
+    // Settings - Clear all data
+    document.getElementById('clearAllDataBtn').addEventListener('click', () => {
+      Modal.confirm('Clear All Data', 'This will permanently delete ALL data. This cannot be undone!', () => {
+        DB.KEYS.forEach(k => {
+          if (k === 'adminSettings') DB.setObj(k, { siteTitle: 'StudyFix', siteTagline: 'Peer Mentoring Platform', maintenanceMode: false });
+          else DB.set(k, []);
+        });
+        Logger.log('Cleared all data', 'System');
+        Toast.show('All data cleared', 'warning');
+        Pages.settings();
+      }, '🗑️');
+    });
+  }
+
+  return { init };
+})();
+
+/* ============================================
+   LOGIN EVENT BINDINGS
+   ============================================ */
+document.getElementById('loginBtn').addEventListener('click', () => {
+  const pw = document.getElementById('loginPassword').value;
+  if (Auth.login(pw)) {
+    document.getElementById('loginError').textContent = '';
+  } else {
+    document.getElementById('loginError').textContent = 'Invalid password. Try again.';
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginPassword').focus();
+  }
+});
+
+document.getElementById('loginPassword').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('loginBtn').click();
+});
+
+document.getElementById('togglePw').addEventListener('click', () => {
+  const input = document.getElementById('loginPassword');
+  const btn = document.getElementById('togglePw');
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = 'Hide'; }
+  else { input.type = 'password'; btn.textContent = 'Show'; }
+});
+
+/* Keyboard shortcut - Escape to close modal */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') Modal.close();
+});
+
+/* ============================================
+   BOOT
+   ============================================ */
+DB.init();
+Auth.checkSession();
+</script>
+</body>
+</html>
